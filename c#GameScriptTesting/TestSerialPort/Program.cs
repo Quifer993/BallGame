@@ -19,10 +19,9 @@ namespace PractizeTestingScripts
 		class Game
 		{
 			private const int MESSAGE_LENGHT = 15;
-            private readonly int CAPACITY_BYTE_COORD = 3;
-
-            /*private string comPort = System.IO.Ports.SerialPort.GetPortNames()[1];*/
-            private string comPort = "COM12";
+			private readonly int CAPACITY_BYTE_COORD = 3;
+			/*private string comPort = System.IO.Ports.SerialPort.GetPortNames()[1];*/
+			private string comPort = "COM14";
 			private SerialPort sp;
 			private bool isContinue = true;
 			int shift = 0;
@@ -46,25 +45,22 @@ namespace PractizeTestingScripts
 			public void clearAll()
 			{
 				isContinue = false;
-
+			}
+			private void clearBuffer()
+			{
+				sp.ReadExisting();
 			}
 			void openComPort()
 			{
 				try
 				{
-					Console.Write(sp.IsOpen);
-					if (sp.IsOpen)
-					{
-						sp.Close();
-
-					}
 					sp.Open();
 					Console.WriteLine("COM port is opened!\n");
 				}
 				catch
 				{
-					Console.WriteLine("COM port not found!");
-					Console.WriteLine(comPort);
+					Console.Write(comPort);
+					Console.WriteLine(" not found!");
 					return;
 				}
 				Console.WriteLine("loop\n");
@@ -105,27 +101,28 @@ namespace PractizeTestingScripts
 			private void putCoords(byte[] buffer)
 			{
 				for (int i = 0; i < MESSAGE_LENGHT; i++)
-                {
+				{
 					int isShift = 0;
 					bool isStartCheck = true;
-                    for (int j = i; j != i || isStartCheck; j = (j + CAPACITY_BYTE_COORD) % MESSAGE_LENGHT)
-                    {
+					for (int j = i; j != i || isStartCheck; j = (j + CAPACITY_BYTE_COORD) % MESSAGE_LENGHT)
+					{
 						isStartCheck = false;
 						if (buffer[j] == 35)
 						{
 							isShift++;
 						}
-                        else
-                        {
+						else
+						{
 							break;
-                        }
+						}
 					}
-                    if (isShift == 4) {
+					if (isShift == 4)
+					{
 						shift = (i) % MESSAGE_LENGHT;
 						break;
 					}
-                    
-                }
+
+				}
 				string bufStr = System.Text.Encoding.Default.GetString(buffer);
 				Console.Write("\n");
 				Console.Write(shift);
@@ -141,14 +138,15 @@ namespace PractizeTestingScripts
 
 				Console.WriteLine(trueStr);
 				for (int i = 0; i < 5; i++)
-                {
+				{
 					int valueWeight = parseStrToCoord(trueStr.Substring(i * CAPACITY_BYTE_COORD, CAPACITY_BYTE_COORD));
 					Console.Write(valueWeight);
 					Console.Write('\t');
 				}
 				int sum = 0;
 				for (int i = 0; i < 4; i++)
-                {
+
+				{
 					int valueWeight = parseStrToCoord(trueStr.Substring(i * CAPACITY_BYTE_COORD, CAPACITY_BYTE_COORD));
 					sum += valueWeight;
 				}
@@ -156,20 +154,18 @@ namespace PractizeTestingScripts
 				Console.WriteLine(sum);
 			}
 
-            private int parseStrToCoord(string coordStr)
+			private int parseStrToCoord(string coordStr)
 			/*числа обозначают силу, приложенную к 1ому из 4  углов, 
 			 * начиная с правого нижнего против часовой стрелки*/
 
 			{
 				int coord = 0;
-                for (int i = 0; i < CAPACITY_BYTE_COORD; i++)
-                {
-					coord *= 64;
-					coord += coordStr[i] - 35;
-
+				for (int i = 0; i < CAPACITY_BYTE_COORD; i++)
+				{
+					coord += (coordStr[i] - 35) * (int)Math.Pow((Double)64, (Double)i);
 				}
 				return coord;
-            }
+			}
 		}
 
 	}
