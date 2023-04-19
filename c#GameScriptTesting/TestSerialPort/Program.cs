@@ -8,6 +8,14 @@ using System.Threading;
 
 namespace PractizeTestingScripts
 {
+	
+	class WeighingMachineException : Exception
+    {
+		public WeighingMachineException(string message, string v)
+			: base(message + v) { }
+	}
+
+
 	class Program
 	{
 		static void Main(string[] args)
@@ -26,22 +34,6 @@ namespace PractizeTestingScripts
 			private bool isContinue = true;
 			int shift = 0;
 
-			public void Start()
-			{
-
-				sp = new SerialPort(comPort, 9600, Parity.None, 8, StopBits.One);
-				sp.Handshake = Handshake.None;
-				sp.RtsEnable = true;
-				//sp.ReadTimeout = 30;
-				Thread myThread = new Thread(openComPort); //Создаем новый объект потока (Thread)
-				/*sp.ReadTimeout = 500;*/
-				myThread.Start(); //запускаем поток
-				/*while (true) {*/
-				var v = Console.ReadLine();
-				Console.WriteLine(v);
-				clearAll();
-			}
-
 			public void clearAll()
 			{
 				isContinue = false;
@@ -50,30 +42,55 @@ namespace PractizeTestingScripts
 			{
 				sp.ReadExisting();
 			}
-			void openComPort()
+
+			private void openComPort()
 			{
-				try
-				{
-					sp.Open();
-					Console.WriteLine("COM port is opened!\n");
+				int iterator = 0;
+
+				while (iterator < 100)
+                {
+					iterator++;
+					try
+					{
+						sp.Open();
+						Console.WriteLine("COM port is opened!\n");
+						iterator = -1;
+					}
+					catch
+					{}
 				}
-				catch
-				{
-					Console.Write(comPort);
-					Console.WriteLine(" not found!");
-					return;
+                if (iterator != -1)
+                {
+					throw new WeighingMachineException(comPort, " not found!");
 				}
+				return;
+			}
+
+			private void gameEngine()
+            {
+				openComPort();
+				clearBuffer();
 				Console.WriteLine("loop\n");
 				int counterBytes = 0;
 				byte[] buffer = new byte[MESSAGE_LENGHT];
 				while (isContinue)
 				{/*1 байт по 15(true) или 22 байта 16 коорд, 4 байт времени 2 байта контрольной суммы 0 1243124 4214 9sum
-				sourse 
-*/
-					string getStrFromPort = "";
-
+				sourse */
+                    try
+                    {
+						if(sp.Read(buffer, 0, MESSAGE_LENGHT) != MESSAGE_LENGHT)
+                        {
+							clearBuffer();
+							continue;
+						}
+					}
+                    catch
+                    {
+						Console.WriteLine("error or nothing\n");
+					}
 					try
 					{
+						sp.Read(buffer, 0, MESSAGE_LENGHT);
 						buffer[counterBytes] = (byte)sp.ReadByte();
 
 						counterBytes++;
@@ -95,8 +112,7 @@ namespace PractizeTestingScripts
 				}
 				sp.Close();
 				Console.WriteLine("end\n");
-
-			}
+            }
 
 			private void putCoords(byte[] buffer)
 			{
@@ -165,6 +181,18 @@ namespace PractizeTestingScripts
 					coord += (coordStr[i] - 35) * (int)Math.Pow((Double)64, (Double)i);
 				}
 				return coord;
+			}
+
+			public void Start()
+			{
+				sp = new SerialPort(comPort, 9600, Parity.None, 8, StopBits.One);
+				sp.Handshake = Handshake.None;
+				sp.RtsEnable = true;
+				Thread myThread = new Thread(gameEngine);
+				myThread.Start();
+				var v = Console.ReadLine();
+				Console.WriteLine(v);
+				clearAll();
 			}
 		}
 
