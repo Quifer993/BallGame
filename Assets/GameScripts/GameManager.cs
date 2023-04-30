@@ -6,6 +6,7 @@ using System.Collections;
 public class GameManager : MonoBehaviour
 {
     public Text textWin;
+    public PlayerController playerController;
 
     bool isEnd = false;
     public void endGame(float timeoutRestart, string typeEndGame)
@@ -14,6 +15,7 @@ public class GameManager : MonoBehaviour
         {
             isEnd = true;
             Debug.Log("GAME OVER");
+            playerController.abortThread();
             if (typeEndGame == "fail")
             {
                 Invoke("restart", timeoutRestart);
@@ -25,8 +27,13 @@ public class GameManager : MonoBehaviour
                 Invoke("restart", timeoutRestart);
 //                restart();
             }
-
+             
         }
+    }
+
+    private void OnApplicationQuit()
+    {
+        playerController.abortThread();
     }
 
     void restart()
