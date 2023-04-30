@@ -26,8 +26,8 @@ namespace PractizeTestingScripts
 
 		class Game
 		{
-			private const int MESSAGE_LENGHT = 15;
-			private readonly int CAPACITY_BYTE_COORD = 3;
+			private const int MESSAGE_LENGHT = 22;
+			private readonly int CAPACITY_BYTE_COORD = 4;
 			/*private string comPort = System.IO.Ports.SerialPort.GetPortNames()[1];*/
 			private string comPort = "COM14";
 			private SerialPort sp;
@@ -55,6 +55,7 @@ namespace PractizeTestingScripts
 						sp.Open();
 						Console.WriteLine("COM port is opened!\n");
 						iterator = -1;
+						break;
 					}
 					catch
 					{}
@@ -69,7 +70,7 @@ namespace PractizeTestingScripts
 			private void gameEngine()
             {
 				openComPort();
-				clearBuffer();
+				//clearBuffer();
 				Console.WriteLine("loop\n");
 				int counterBytes = 0;
 				byte[] buffer = new byte[MESSAGE_LENGHT];
@@ -78,17 +79,28 @@ namespace PractizeTestingScripts
 				sourse */
                     try
                     {
-						if(sp.Read(buffer, 0, MESSAGE_LENGHT) != MESSAGE_LENGHT)
-                        {
-							clearBuffer();
-							continue;
+                        int ir;
+                        if ((ir = sp.Read(buffer, 0, MESSAGE_LENGHT)) != MESSAGE_LENGHT) {
+                            clearBuffer();
+                            Console.Write(ir);
+							Thread.Sleep(10);
+                        }
+                        else {
+                            if (buffer[0] == '#' && buffer[20] == '#') {
+								putCoords(buffer);
+							}
+                            else {
+								clearBuffer();
+								continue;
+							}
+							
 						}
-					}
+                    }
                     catch
                     {
-						Console.WriteLine("error or nothing\n");
-					}
-					try
+                        Console.WriteLine("error or nothing\n");
+                    }
+                    /*try
 					{
 						sp.Read(buffer, 0, MESSAGE_LENGHT);
 						buffer[counterBytes] = (byte)sp.ReadByte();
@@ -101,73 +113,37 @@ namespace PractizeTestingScripts
 							counterBytes = 0;
 							putCoords(buffer);
 						}
-						/*string bufStr = System.Text.Encoding.Default.GetString(buffer);
-						Console.WriteLine(bufStr);*/
+						*//*string bufStr = System.Text.Encoding.Default.GetString(buffer);
+						Console.WriteLine(bufStr);*//*
 					}
 					catch
 					{
 						Console.WriteLine("error or nothing\n");
 						counterBytes = 0;
-					}
+					}*/
 				}
 				sp.Close();
 				Console.WriteLine("end\n");
             }
 
-			private void putCoords(byte[] buffer)
-			{
-				for (int i = 0; i < MESSAGE_LENGHT; i++)
-				{
-					int isShift = 0;
-					bool isStartCheck = true;
-					for (int j = i; j != i || isStartCheck; j = (j + CAPACITY_BYTE_COORD) % MESSAGE_LENGHT)
-					{
-						isStartCheck = false;
-						if (buffer[j] == 35)
-						{
-							isShift++;
-						}
-						else
-						{
-							break;
-						}
-					}
-					if (isShift == 4)
-					{
-						shift = (i) % MESSAGE_LENGHT;
-						break;
-					}
-
-				}
+			private void putCoords(byte[] buffer) {
 				string bufStr = System.Text.Encoding.Default.GetString(buffer);
 				Console.Write("\n");
-				Console.Write(shift);
-				Console.Write("- is shift");
-				Console.Write("\n");
-				Console.WriteLine(bufStr);
-				char[] trueChars = new char[MESSAGE_LENGHT];
-				for (var i = bufStr.Length - 1; i > -1; --i)
-				{
-					trueChars[i] = (char)buffer[(MESSAGE_LENGHT + i + shift) % MESSAGE_LENGHT];
-				}
-				string trueStr = new string(trueChars);
+                Console.WriteLine(bufStr);
 
-				Console.WriteLine(trueStr);
-				for (int i = 0; i < 5; i++)
-				{
-					int valueWeight = parseStrToCoord(trueStr.Substring(i * CAPACITY_BYTE_COORD, CAPACITY_BYTE_COORD));
+				for (int i = 0; i < 5; i++) {
+					int valueWeight = parseStrToCoord(bufStr.Substring(i * CAPACITY_BYTE_COORD + 1, CAPACITY_BYTE_COORD));
 					Console.Write(valueWeight);
 					Console.Write('\t');
 				}
 				int sum = 0;
-				for (int i = 0; i < 4; i++)
-
-				{
-					int valueWeight = parseStrToCoord(trueStr.Substring(i * CAPACITY_BYTE_COORD, CAPACITY_BYTE_COORD));
+				for (int i = 0; i < 4; i++) {
+					int valueWeight = parseStrToCoord(bufStr.Substring(i * CAPACITY_BYTE_COORD, CAPACITY_BYTE_COORD));
 					sum += valueWeight;
 				}
 				Console.WriteLine();
 				Console.WriteLine(sum);
+
 			}
 
 			private int parseStrToCoord(string coordStr)
@@ -178,7 +154,13 @@ namespace PractizeTestingScripts
 				int coord = 0;
 				for (int i = 0; i < CAPACITY_BYTE_COORD; i++)
 				{
-					coord += (coordStr[i] - 35) * (int)Math.Pow((Double)64, (Double)i);
+					if (coordStr[i] > 92){
+						coord += (coordStr[i] - 36) * (int)Math.Pow((Double)64, (Double)i);
+					}
+                    else{
+						coord += (coordStr[i] - 35) * (int)Math.Pow((Double)64, (Double)i);
+					}
+					
 				}
 				return coord;
 			}
