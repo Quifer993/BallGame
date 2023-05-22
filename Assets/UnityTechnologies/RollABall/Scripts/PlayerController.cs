@@ -87,8 +87,16 @@ public class PlayerController : MonoBehaviour {
 		
 		Console.WriteLine();
 		Console.WriteLine(sum);
-		float xCoord = (float)(vector[0] + vector[1] - vector[2] - vector[3] - 28000) / 400000;
-		float yCoord = (float)(vector[1] + vector[2] - vector[0] - vector[3] + 48000) / 400000;
+		float x = (float)(vector[0] + vector[1] - vector[2] - vector[3] - 26700);
+		float y = (float)(vector[1] + vector[2] - vector[0] - vector[3] + 45650);
+
+		Debug.Log("x+y:");
+		Debug.Log(x);
+		Debug.Log(',');
+		Debug.Log(y);
+		float xCoord = (float)(vector[0] + vector[1] - vector[2] - vector[3] - 28900) / 400000;
+		float yCoord = (float)(vector[1] + vector[2] - vector[0] - vector[3] + 48750) / 400000;
+
 		movement = new Vector3(xCoord, 0.0f, yCoord);
 		Debug.Log(movement);
 	}
