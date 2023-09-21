@@ -17,24 +17,30 @@ public class PlayerController : MonoBehaviour {
 
 	// Create public variables for player speed, and for the Text UI game objects
 	public float speed;
+	// Create private references to the rigidbody component on the player, and the count of pick up objects picked up so far
+	private Rigidbody rb;
+
 	const float MAX_FALL = -3f;
 	const float MAX_SPEED = 0.6f;
 	public float scale = 0.1f;
 	public Text countText;
 	public Text winText;
 	public Text portOutput;
-/*	public Vector3 vectorMove = new Vector3(0.0f,0.0f,0.0f);*/
+
 	private Vector3 movement = new Vector3(0.0f,0.0f,0.0f);
 	public Vector3 movementBefore = new Vector3(0.0f,0.0f,0.0f);
 	private int zeromass = 2000000;
-	// Create private references to the rigidbody component on the player, and the count of pick up objects picked up so far
-	private Rigidbody rb;
+
 	private int count;
 	private bool isContinue = true;
 
-	private string comPort = "COM14";//System.IO.Ports.SerialPort.GetPortNames()[1];
+	int[] standartInput = { 0, 0, 0, 0 };
+	int[] movementVector = { 0, 0, 0, 0 };
+	private const int SIZE_STANDART_INPUT = 1000;
 	private const int MESSAGE_LENGHT = 22;
 	private readonly int CAPACITY_BYTE_COORD = 4;
+	private string comPort = "COM4";//System.IO.Ports.SerialPort.GetPortNames()[1];
+
 	// At the start of the game..
 	private Thread myThread;
 
@@ -49,12 +55,142 @@ public class PlayerController : MonoBehaviour {
 		sp.ReadExisting();
 	}
 
-	private int parseStrToCoord(string coordStr)
+
+	private void getStandartInput()
+	{
+		byte[] buffer = new byte[MESSAGE_LENGHT];
+		int ir = 0;
+		for (int i = 0; i < SIZE_STANDART_INPUT && isContinue;)
+		{
+			i += workWithSp(putCoords, writeToStandartInput, buffer, ref ir);
+		}
+		Debug.Log("Standart input : ");
+		for (int i = 0; i < 4; i++)
+		{
+			standartInput[i] = standartInput[i] / SIZE_STANDART_INPUT;
+			Debug.Log(standartInput[i] + "\t");
+		}
+
+	}
+
+	private void putInputInformation()
+	{
+		byte[] buffer = new byte[MESSAGE_LENGHT];
+		int ir = 0;
+
+		while (isContinue)
+		{
+			Console.Write("\n");
+			workWithSp(putCoords, writeToMovement, buffer, ref ir);
+
+			float sum = 0;
+			for (int i = 0; i < 4;i++)
+            {
+				sum += (float)movementVector[i];
+            }
+			if (sum > 5000)
+			{
+				movement = new Vector3(((float)(movementVector[0] + movementVector[1] - movementVector[2] - movementVector[3]) / sum),
+					0.0f,
+					(float)((movementVector[1] + movementVector[2] - movementVector[0] - movementVector[3]) / sum)
+					);
+            }
+            else
+            {
+				movement = new Vector3(0.0f, 0.0f, 0.0f);
+            }
+		}
+	}
+
+	private int workWithSp(Action<byte[], Action<int, int>> putFunc, Action<int, int> putTo, byte[] buffer, ref int ir)
+	{
+		try
+		{
+			if ((ir += sp.Read(buffer, ir, MESSAGE_LENGHT - ir)) >= MESSAGE_LENGHT)
+			{
+				if (buffer[0] == '#' && buffer[20] == '#')
+				{
+					putFunc(buffer, putTo);
+					ir = 0;
+					return 1;
+				}
+				else
+				{
+					clearBuffer();
+					ir = 0;
+				}
+			}
+		}
+		catch (Exception e)
+		{
+			Console.WriteLine(e.Message);
+		}
+		return 0;
+	}
+
+	private void putCoords(byte[] buffer, Action<int, int> putTo)
+	{
+		string bufStr = System.Text.Encoding.Default.GetString(buffer);
+		/*                Console.WriteLine(bufStr);*/
+
+		for (int i = 0; i < 5; i++)
+		{
+			int valueWeight;
+
+			if (i != 4)
+			{
+				valueWeight = parseBlockStrToCoord(bufStr.Substring(i * CAPACITY_BYTE_COORD + 1, CAPACITY_BYTE_COORD), CAPACITY_BYTE_COORD);
+			}
+			else
+			{
+				valueWeight = parseBlockStrToCoord(bufStr.Substring(i * CAPACITY_BYTE_COORD + 1, CAPACITY_BYTE_COORD - 1), CAPACITY_BYTE_COORD - 1);
+			}
+			writeValue(putTo, valueWeight, i);
+		}
+	}
+
+
+	private void writeValue(Action<int, int> putTo, int value, int i)
+	{
+		putTo(value, i);
+	}
+
+	private void writeToStandartInput(int value, int i)
+	{
+		if (i != 4)
+		{
+			standartInput[i] += value;
+		}
+	}
+	private void writeToDebugOutput(int value, int i)
+	{
+		if (i != 4)
+		{
+			Console.Write(value - standartInput[i]);
+		}
+		else
+		{
+			Console.Write(value);
+		}
+
+		Console.Write('\t');
+
+	}
+	
+	
+	private void writeToMovement(int value, int i) {
+		if (i != 4) {
+			movementVector[i] = value - standartInput[i];
+		}
+	}
+
+	private int parseBlockStrToCoord(string coordStr, int len)
 	/*числа обозначают силу, приложенную к 1ому из 4  углов, 
-	 * начиная с правого верхнего по часовой стрелке*/
+	 * начиная с правого нижнего против часовой стрелки*/
+
 	{
 		int coord = 0;
-		for (int i = 0; i < CAPACITY_BYTE_COORD; i++)
+		for (int i = 0; i < len; i++)
 		{
 			if (coordStr[i] > 92)
 			{
@@ -67,38 +203,6 @@ public class PlayerController : MonoBehaviour {
 
 		}
 		return coord;
-	}
-
-	private void putCoords(byte[] buffer)
-	{
-		string bufStr = System.Text.Encoding.Default.GetString(buffer);
-		Console.Write("\n");
-		Console.WriteLine(bufStr);
-		int[] vector = new int[5];
-
-		for (int i = 0; i < 5; i++)
-		{
-			vector[i] = parseStrToCoord(bufStr.Substring(i * CAPACITY_BYTE_COORD + 1, CAPACITY_BYTE_COORD));
-			Console.Write(vector[i]);
-			Console.Write('\t');
-		}
-		int sum = 0;
-		for (int i = 0; i < 4; i++) { sum += vector[i]; }
-		
-		Console.WriteLine();
-		Console.WriteLine(sum);
-		float x = (float)(vector[0] + vector[1] - vector[2] - vector[3] - 26700);
-		float y = (float)(vector[1] + vector[2] - vector[0] - vector[3] + 45650);
-
-		Debug.Log("x+y:");
-		Debug.Log(x);
-		Debug.Log(',');
-		Debug.Log(y);
-		float xCoord = (float)(vector[0] + vector[1] - vector[2] - vector[3] - 28900) / 400000;
-		float yCoord = (float)(vector[1] + vector[2] - vector[0] - vector[3] + 48750) / 400000;
-
-		movement = new Vector3(xCoord, 0.0f, yCoord);
-		Debug.Log(movement);
 	}
 
 
@@ -127,19 +231,24 @@ public class PlayerController : MonoBehaviour {
 
 	private void gameEngine() {
 		openComPort();
+
+		getStandartInput();
+		putInputInformation();
+/*
 		int counterBytes = 0;
 		byte[] buffer = new byte[2 * MESSAGE_LENGHT];
 		int ir = 0;
 		while (isContinue) {
 			try {
 				if ((ir += sp.Read(buffer, ir, MESSAGE_LENGHT - ir)) < MESSAGE_LENGHT) {
-					/*                            clearBuffer();*/
+					*//*                            clearBuffer();*//*
 					Console.Write(ir);
 					Console.Write(' ');
-					/*Thread.Sleep(1);*/
+					*//*Thread.Sleep(1);*//*
 				}
 				else {
 					if (buffer[0] == '#' && buffer[20] == '#') {
+
 						putCoords(buffer);
 						ir = 0;
 					}
@@ -152,7 +261,7 @@ public class PlayerController : MonoBehaviour {
 			catch { Console.WriteLine("error or nothing\n"); }
 		}
 		sp.Close();
-		Console.WriteLine("end\n");
+		Console.WriteLine("end\n");*/
 	}
 
 
@@ -209,6 +318,7 @@ public class PlayerController : MonoBehaviour {
 		*/
 
 		rb.AddForce (movement * 7.0f/* - movementBefore*/);
+		/*Debug.Log(movement);*/
 		portOutput.text = outputPortStr;
 	}
 

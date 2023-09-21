@@ -6,15 +6,12 @@ using System.Threading.Tasks;
 using System.IO.Ports;
 using System.Threading;
 
-namespace PractizeTestingScripts
-{
-	
+namespace PractizeTestingScripts {
 	class WeighingMachineException : Exception
     {
 		public WeighingMachineException(string message, string v)
 			: base(message + v) { }
 	}
-
 
 	class Program
 	{
@@ -26,13 +23,14 @@ namespace PractizeTestingScripts
 
 		class Game
 		{
+			private const int SIZE_STANDART_INPUT = 1000;
 			private const int MESSAGE_LENGHT = 22;
 			private readonly int CAPACITY_BYTE_COORD = 4;
 			/*private string comPort = System.IO.Ports.SerialPort.GetPortNames()[1];*/
-			private string comPort = "COM14";
+			private string comPort = "COM4";
 			private SerialPort sp;
 			private bool isContinue = true;
-			int shift = 0;
+			int[] standartInput = { 0, 0, 0, 0 };
 
 			public void clearAll()
 			{
@@ -43,18 +41,15 @@ namespace PractizeTestingScripts
 				sp.ReadExisting();
 			}
 			
-			private void openComPort()
-			{
+			private void openComPort() {
 				sp = new SerialPort(comPort, 9600, Parity.None, 8, StopBits.One);
 				sp.Handshake = Handshake.None;
 				sp.RtsEnable = true;
 				int iterator = 0;
 
-				while (iterator < 100)
-				{
+				while (iterator < 100) {
 					iterator++;
-					try
-					{
+					try {
 						sp.Open();
 						Console.WriteLine("COM port is opened!\n");
 						iterator = -1;
@@ -62,8 +57,7 @@ namespace PractizeTestingScripts
 					}
 					catch { }
 				}
-				if (iterator != -1)
-				{
+				if (iterator != -1) {
 					throw new WeighingMachineException(comPort, " not found!");
 				}
 				return;
@@ -71,67 +65,105 @@ namespace PractizeTestingScripts
 
 			private void gameEngine() {
 				openComPort();
-				//clearBuffer();
-				Console.WriteLine("loop\n");
-				int counterBytes = 0;
-				byte[] buffer = new byte[MESSAGE_LENGHT];
-				int ir = 0;
-				while (isContinue) {
-					try {
-						if ((ir += sp.Read(buffer, ir, MESSAGE_LENGHT - ir)) < MESSAGE_LENGHT) {
-							/*                            clearBuffer();*/
-							Console.Write(ir);
-							Console.Write(' ');
-/*                            Thread.Sleep(1000);*/
-                        }
-						else {
-							if (buffer[0] == '#' && buffer[20] == '#') {
-								putCoords(buffer);
-								ir = 0;
-							}
-							else {
-								clearBuffer();
-								ir = 0;
-							}
-						}
-                    } catch {
-                        Console.WriteLine("error or nothing\n");
-                    }
-				}
+				getStandartInput();
+				putInputInformation();
+				
 				sp.Close();
 				Console.WriteLine("end\n");
             }
 
-			private void putCoords(byte[] buffer) {
-				string bufStr = System.Text.Encoding.Default.GetString(buffer);
-				Console.Write("\n");
-                Console.WriteLine(bufStr);
+			private void getStandartInput() {
+				byte[] buffer = new byte[MESSAGE_LENGHT];
+				int ir = 0;
+				for (int i = 0; i < SIZE_STANDART_INPUT && isContinue; )
+				{
+					i += workWithSp(putCoords, writeToStandartInput, buffer, ref ir);
+				}
 
-				for (int i = 0; i < 5; i++) {
+				Console.WriteLine("Standart input : ");
+				for (int i = 0; i < 4; i++)
+				{
+					standartInput[i] = standartInput[i] / SIZE_STANDART_INPUT;
+					Console.Write(standartInput[i] + "\t");
+				}
+
+			}
+
+			private void putInputInformation() {
+				byte[] buffer = new byte[MESSAGE_LENGHT];
+				int ir = 0;
+
+				while (isContinue) {
+					Console.Write("\n");
+					workWithSp(putCoords, writeToDebugOutput, buffer, ref ir);
+				}
+			}
+
+            private int workWithSp(Action<byte[], Action<int, int>> putFunc, Action<int, int> putTo, byte[] buffer, ref int ir) {
+					try {
+						if ((ir += sp.Read(buffer, ir, MESSAGE_LENGHT - ir)) >= MESSAGE_LENGHT) {
+							if (buffer[0] == '#' && buffer[20] == '#')
+							{
+								putFunc(buffer, putTo);
+								ir = 0;
+								return 1;
+							}
+							else
+							{
+								clearBuffer();
+								ir = 0;
+							}
+						}
+					}
+					catch(Exception e)
+					{
+						Console.WriteLine(e.Message);
+					}
+					return 0;
+			}
+
+            private void putCoords(byte[] buffer, Action<int, int> putTo) {
+				string bufStr = System.Text.Encoding.Default.GetString(buffer);
+                /*                Console.WriteLine(bufStr);*/
+
+                for (int i = 0; i < 5; i++) {
 					int valueWeight;
 
 					if (i != 4)
                     {
-						valueWeight = parseStrToCoord(bufStr.Substring(i * CAPACITY_BYTE_COORD + 1, CAPACITY_BYTE_COORD), CAPACITY_BYTE_COORD);
+						valueWeight = parseBlockStrToCoord(bufStr.Substring(i * CAPACITY_BYTE_COORD + 1, CAPACITY_BYTE_COORD), CAPACITY_BYTE_COORD);
 					}
                     else
                     {
-						valueWeight = parseStrToCoord(bufStr.Substring(i * CAPACITY_BYTE_COORD + 1, CAPACITY_BYTE_COORD - 1), CAPACITY_BYTE_COORD - 1);
+						valueWeight = parseBlockStrToCoord(bufStr.Substring(i * CAPACITY_BYTE_COORD + 1, CAPACITY_BYTE_COORD - 1), CAPACITY_BYTE_COORD - 1);
 					}
-					Console.Write(valueWeight);
-					Console.Write('\t');
+					writeValue(putTo, valueWeight, i);
 				}
-				int sum = 0;
-				for (int i = 0; i < 4; i++) {
-					int valueWeight = parseStrToCoord(bufStr.Substring(i * CAPACITY_BYTE_COORD, CAPACITY_BYTE_COORD), CAPACITY_BYTE_COORD);
-					sum += valueWeight;
+			}
+
+
+			private void writeValue(Action<int, int> putTo, int value, int i){
+				putTo(value, i);
+			}
+
+			private void writeToStandartInput(int value, int i) {
+                if (i != 4) {
+					standartInput[i] += value;
 				}
-				Console.WriteLine();
-				Console.WriteLine(sum);
+			}
+			private void writeToDebugOutput(int value, int i)
+			{
+				if (i != 4) {
+					Console.Write(value - standartInput[i]);
+				} else {
+					Console.Write(value);
+				}
+
+				Console.Write('\t');
 
 			}
 
-			private int parseStrToCoord(string coordStr, int len)
+			private int parseBlockStrToCoord(string coordStr, int len)
 			/*числа обозначают силу, приложенную к 1ому из 4  углов, 
 			 * начиная с правого нижнего против часовой стрелки*/
 
