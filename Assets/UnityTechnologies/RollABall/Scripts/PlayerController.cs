@@ -2,8 +2,14 @@
 using System.Threading;
 using System.IO.Ports;
 using System.Collections;
+using System;
 using UnityEngine.UI;
 
+class WeighingMachineException : Exception
+{
+	public WeighingMachineException(string message, string v)
+		: base(message + v) { }
+}
 
 public class PlayerController : MonoBehaviour {
 	private SerialPort sp;
@@ -11,20 +17,32 @@ public class PlayerController : MonoBehaviour {
 
 	// Create public variables for player speed, and for the Text UI game objects
 	public float speed;
+	// Create private references to the rigidbody component on the player, and the count of pick up objects picked up so far
+	private Rigidbody rb;
+
 	const float MAX_FALL = -3f;
 	const float MAX_SPEED = 0.6f;
 	public float scale = 0.1f;
 	public Text countText;
 	public Text winText;
 	public Text portOutput;
-/*	public Vector3 vectorMove = new Vector3(0.0f,0.0f,0.0f);*/
-	public Vector3 movement = new Vector3(0.0f,0.0f,0.0f);
+
+	private Vector3 movement = new Vector3(0.0f,0.0f,0.0f);
 	public Vector3 movementBefore = new Vector3(0.0f,0.0f,0.0f);
-	// Create private references to the rigidbody component on the player, and the count of pick up objects picked up so far
-	private Rigidbody rb;
+	private int zeromass = 2000000;
+
 	private int count;
 	private bool isContinue = true;
+
+	int[] standartInput = { 0, 0, 0, 0 };
+	int[] movementVector = { 0, 0, 0, 0 };
+	private const int SIZE_STANDART_INPUT = 1000;
+	private const int MESSAGE_LENGHT = 22;
+	private readonly int CAPACITY_BYTE_COORD = 4;
+	private string comPort = "COM4";//System.IO.Ports.SerialPort.GetPortNames()[1];
+
 	// At the start of the game..
+	private Thread myThread;
 
 	public void clearAll()
     {
@@ -32,103 +50,215 @@ public class PlayerController : MonoBehaviour {
 
 	}
 
-	void openComPort()
-    {
-		try
-		{
-			Debug.Log(sp.IsOpen);
-            if (sp.IsOpen)
-            {
-				sp.Close();
-
-			}
-			sp.Open();
-			//sp.ReadTimeout = 10;
-			Debug.Log("COM port is opened!");
-		}
-		catch
-		{
-			Debug.Log("COM port not found!");
-			Debug.Log(System.IO.Ports.SerialPort.GetPortNames()[0]);
-			//System.Threading.Thread.Sleep(50000);
-		}
-
-        while (isContinue)
-        {/*1йт по 5 или 22 байта 16 бакоорд, 4 байт времени 2 байта контрольной суммы 0 1243124 4214 9sum
-				sourse 
-*/			string getStrFromPort = "";
-			byte[] buffer = new byte[2];
-
-			try {
-				//getStrFromPort = sp.ReadLine();
-
-				sp.Read(buffer, 0, 2);
-			}
-            catch
-            {
-                try
-                {
-					//Debug.Log(getStrFromPort.Length);
-/*					outputPortStr = System.Text.Encoding.Default.GetString(buffer);
-					Debug.Log(outputPortStr);*/
-					//portOutput.text = getStrFromPort;
-                }
-                catch { }
-			}
-			int[] vector = new int[4];//
-			vector[0] = ((buffer[0] >> 5) << 5);
-			vector[1] = ((buffer[0] >> 2) << 5);
-			vector[2] = (buffer[0] << 6) | (((buffer[0] >> 7) << 7) >> 2);
-			vector[3] = ((buffer[1] >> 4) << 5);
-			outputPortStr = System.Text.Encoding.Default.GetString(buffer);
-			Debug.Log(outputPortStr);
-			Debug.Log(string.Join(",", vector));//сколько бит за 1 раз передается? возможно нужно переделать(почти точно)
-			//portOutput.text = "error";
-
-			/*		while ((getStrFromPort = sp.ReadLine()) == null)
-					{
-						continue;
-					}*/
-			//		sp.BaseStream.Flush();
-		}
-
-
-
+	private void clearBuffer()
+	{
+		sp.ReadExisting();
 	}
 
 
-	void Start ()
+	private void getStandartInput()
 	{
-		// Assign the Rigidbody component to our private rb variable
+		byte[] buffer = new byte[MESSAGE_LENGHT];
+		int ir = 0;
+		for (int i = 0; i < SIZE_STANDART_INPUT && isContinue;)
+		{
+			i += workWithSp(putCoords, writeToStandartInput, buffer, ref ir);
+		}
+		Debug.Log("Standart input : ");
+		for (int i = 0; i < 4; i++)
+		{
+			standartInput[i] = standartInput[i] / SIZE_STANDART_INPUT;
+			Debug.Log(standartInput[i] + "\t");
+		}
+
+	}
+
+	private void putInputInformation()
+	{
+		byte[] buffer = new byte[MESSAGE_LENGHT];
+		int ir = 0;
+
+		while (isContinue)
+		{
+			Console.Write("\n");
+			workWithSp(putCoords, writeToMovement, buffer, ref ir);
+
+			float sum = 0;
+			for (int i = 0; i < 4;i++)
+            {
+				sum += (float)movementVector[i];
+            }
+			if (sum > 5000)
+			{
+				movement = new Vector3(((float)(movementVector[0] + movementVector[1] - movementVector[2] - movementVector[3]) / sum),
+					0.0f,
+					(float)((movementVector[1] + movementVector[2] - movementVector[0] - movementVector[3]) / sum)
+					);
+            }
+            else
+            {
+				movement = new Vector3(0.0f, 0.0f, 0.0f);
+            }
+		}
+	}
+
+	private int workWithSp(Action<byte[], Action<int, int>> putFunc, Action<int, int> putTo, byte[] buffer, ref int ir)
+	{
+		try
+		{
+			if ((ir += sp.Read(buffer, ir, MESSAGE_LENGHT - ir)) >= MESSAGE_LENGHT)
+			{
+				if (buffer[0] == '#' && buffer[20] == '#')
+				{
+					putFunc(buffer, putTo);
+					ir = 0;
+					return 1;
+				}
+				else
+				{
+					clearBuffer();
+					ir = 0;
+				}
+			}
+		}
+		catch (Exception e)
+		{
+			Console.WriteLine(e.Message);
+		}
+		return 0;
+	}
+
+	private void putCoords(byte[] buffer, Action<int, int> putTo)
+	{
+		string bufStr = System.Text.Encoding.Default.GetString(buffer);
+		/*                Console.WriteLine(bufStr);*/
+
+		for (int i = 0; i < 5; i++)
+		{
+			int valueWeight;
+
+			if (i != 4)
+			{
+				valueWeight = parseBlockStrToCoord(bufStr.Substring(i * CAPACITY_BYTE_COORD + 1, CAPACITY_BYTE_COORD), CAPACITY_BYTE_COORD);
+			}
+			else
+			{
+				valueWeight = parseBlockStrToCoord(bufStr.Substring(i * CAPACITY_BYTE_COORD + 1, CAPACITY_BYTE_COORD - 1), CAPACITY_BYTE_COORD - 1);
+			}
+			writeValue(putTo, valueWeight, i);
+		}
+	}
+
+
+	private void writeValue(Action<int, int> putTo, int value, int i)
+	{
+		putTo(value, i);
+	}
+
+	private void writeToStandartInput(int value, int i)
+	{
+		if (i != 4)
+		{
+			standartInput[i] += value;
+		}
+	}
+	private void writeToDebugOutput(int value, int i)
+	{
+		if (i != 4)
+		{
+			Console.Write(value - standartInput[i]);
+		}
+		else
+		{
+			Console.Write(value);
+		}
+
+		Console.Write('\t');
+
+	}
+	
+	
+	private void writeToMovement(int value, int i) {
+		if (i != 4) {
+			movementVector[i] = value - standartInput[i];
+		}
+	}
+
+	private int parseBlockStrToCoord(string coordStr, int len)
+	/*числа обозначают силу, приложенную к 1ому из 4  углов, 
+	 * начиная с правого нижнего против часовой стрелки*/
+
+	{
+		int coord = 0;
+		for (int i = 0; i < len; i++)
+		{
+			if (coordStr[i] > 92)
+			{
+				coord += (coordStr[i] - 36) * (int)Math.Pow((Double)64, (Double)i);
+			}
+			else
+			{
+				coord += (coordStr[i] - 35) * (int)Math.Pow((Double)64, (Double)i);
+			}
+
+		}
+		return coord;
+	}
+
+
+	private void openComPort() {
+		sp = new SerialPort(comPort, 9600, Parity.None, 8, StopBits.One);
+		sp.Handshake = Handshake.None;
+		sp.RtsEnable = true;
+		int iterator = 0;
+
+		while (iterator < 100) {
+			iterator++;
+			try {
+				sp.Open();
+				Debug.Log("COM port is opened!\n");
+				iterator = -1;
+				break;
+			}
+			catch { }
+		}
+		if (iterator != -1) {
+			throw new WeighingMachineException(comPort, " not found!");
+		}
+		return;
+	}
+
+
+	private void gameEngine() {
+		openComPort();
+
+		getStandartInput();
+		putInputInformation();
+	}
+
+
+	void Start () {
 		rb = GetComponent<Rigidbody>();
 		//rb.isKinematic = true;
-		// Set the count to zero 
 		count = 0;
-
-		// Run the SetCountText function to update the UI (see below)
 		SetCountText ();
 
-		// Set the text property of our Win Text UI to an empty string, making the 'You Win' (game over message) blank
 		winText.text = "";
 		portOutput.text = "start";
 
-		sp = new SerialPort(System.IO.Ports.SerialPort.GetPortNames()[0], 9600);
-		//sp.ReadTimeout = 30;
-		Thread myThread = new Thread(openComPort); //Создаем новый объект потока (Thread)
-
-		myThread.Start(); //запускаем поток
-
-		
-
-		/*        TimerCallback tm = new TimerCallback(Count);
-				Timer timer = new Timer(tm, 0*//*ненужно*//*, 0, 10);*/
+		myThread = new Thread(gameEngine);
+		myThread.Start();
 	}
 
-	// Each physics step..
-	void FixedUpdate ()	{
+	public void abortThread() {
+		sp.Close();
+		myThread.Abort();
+	}
 
-        if (rb.position.y < MAX_FALL)
-        {
+
+	void FixedUpdate ()	{
+        if (rb.position.y < MAX_FALL) {
+			abortThread();
 			FindObjectOfType<GameManager>().endGame(0f, "fail");
 		}
 
@@ -149,7 +279,8 @@ public class PlayerController : MonoBehaviour {
 		}
 		*/
 
-		rb.AddForce (mousePosCenter * 7.0f/* - movementBefore*/);
+		rb.AddForce (movement * 7.0f/* - movementBefore*/);
+		/*Debug.Log(movement);*/
 		portOutput.text = outputPortStr;
 	}
 
