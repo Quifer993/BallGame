@@ -23,7 +23,7 @@ namespace PractizeTestingScripts {
 
 		class Game
 		{
-			private const int SIZE_STANDART_INPUT = 1000;
+			private const int SIZE_STANDART_INPUT = 100;
 			private const int MESSAGE_LENGHT = 22;
 			private readonly int CAPACITY_BYTE_COORD = 4;
 			/*private string comPort = System.IO.Ports.SerialPort.GetPortNames()[1];*/

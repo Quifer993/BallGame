@@ -234,68 +234,30 @@ public class PlayerController : MonoBehaviour {
 
 		getStandartInput();
 		putInputInformation();
-/*
-		int counterBytes = 0;
-		byte[] buffer = new byte[2 * MESSAGE_LENGHT];
-		int ir = 0;
-		while (isContinue) {
-			try {
-				if ((ir += sp.Read(buffer, ir, MESSAGE_LENGHT - ir)) < MESSAGE_LENGHT) {
-					*//*                            clearBuffer();*//*
-					Console.Write(ir);
-					Console.Write(' ');
-					*//*Thread.Sleep(1);*//*
-				}
-				else {
-					if (buffer[0] == '#' && buffer[20] == '#') {
-
-						putCoords(buffer);
-						ir = 0;
-					}
-					else {
-						clearBuffer();
-						ir = 0;
-					}
-				}
-			}
-			catch { Console.WriteLine("error or nothing\n"); }
-		}
-		sp.Close();
-		Console.WriteLine("end\n");*/
 	}
 
 
-	void Start ()
-	{
+	void Start () {
 		rb = GetComponent<Rigidbody>();
 		//rb.isKinematic = true;
 		count = 0;
-
 		SetCountText ();
 
 		winText.text = "";
 		portOutput.text = "start";
 
 		myThread = new Thread(gameEngine);
-		myThread.Start(); //запускаем поток
-
-		
-
-		/*        TimerCallback tm = new TimerCallback(Count);
-				Timer timer = new Timer(tm, 0*//*ненужно*//*, 0, 10);*/
+		myThread.Start();
 	}
 
-	public void abortThread()
-    {
+	public void abortThread() {
 		sp.Close();
 		myThread.Abort();
 	}
 
 
 	void FixedUpdate ()	{
-
-        if (rb.position.y < MAX_FALL)
-        {
+        if (rb.position.y < MAX_FALL) {
 			abortThread();
 			FindObjectOfType<GameManager>().endGame(0f, "fail");
 		}
