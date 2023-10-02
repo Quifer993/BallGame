@@ -5,6 +5,7 @@ using UnityEngine.SceneManagement;
 
 public class MainMenu : MonoBehaviour {
     public void play() {
+        PlayerPrefs.SetString("error", "");
         SceneManager.LoadScene("Roll-a-ball", LoadSceneMode.Single);
     }
 
@@ -17,10 +18,10 @@ public class MainMenu : MonoBehaviour {
         {
             if (planeScr.openComPort(port) && planeScr.getStandartInput()) {
                 planePort = port;
+                Debug.Log(port);
                 isExistingComPort = true;
                 break;
             }
-            Debug.Log(port);
         }
         if (!isExistingComPort)
         {

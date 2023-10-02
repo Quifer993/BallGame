@@ -89,12 +89,8 @@ public class PlayerController : MonoBehaviour {
 
 
 		string comPort = SaveDataFromPlane.ReadFromFile(planeScr.standartInput);
-		Debug.Log("gavno");
 
-		if (comPort.Equals(""))
-		{
-			Debug.Log("is");
-
+		if (comPort.Equals("")) {
 			PlayerPrefs.SetString("error", "Com port not found");
 			SceneManager.LoadScene("MainMenu", LoadSceneMode.Single);
 			//FindObjectOfType<GameManager>().endGame(0f, "Com port not found");
@@ -102,10 +98,7 @@ public class PlayerController : MonoBehaviour {
 			return;
 
 		}
-		if (!planeScr.openComPort(comPort))
-		{
-			Debug.Log("jopi");
-
+		if (!planeScr.openComPort(comPort)) {
 			PlayerPrefs.SetString("error", "Com port is not already used a plane for game. Please, use rebuild setting for plane!");
 			SceneManager.LoadScene("MainMenu", LoadSceneMode.Single);
 			//FindObjectOfType<GameManager>().endGame(0f, "Com port is not already used a plane for game. Please, use rebuild setting for plane!");
