@@ -1,12 +1,12 @@
-/*using System.Collections;
-using System.Collections.Generic;*/
+using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
-
-public class finishTrigger : MonoBehaviour{
+public class FinishScript : MonoBehaviour
+{
     void OnTriggerEnter()
     {
-        
         FindObjectOfType<GameManager>().endGame(3f, "End");
     }
 }
+
