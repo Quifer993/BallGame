@@ -12,46 +12,51 @@ public class PlaneScript
 	public int[] standartInput = { 0, 0, 0, 0 };
 
 
-	public void openComPort()
+	public bool openComPort(String comPort)
 	{
-		var comPort = Constants.COM_PORT;
+//		comPort = Constants.COM_PORT;
 		sp = new SerialPort(comPort, 9600, Parity.None, 8, StopBits.One);
 		sp.Handshake = Handshake.None;
 		sp.RtsEnable = true;
-		int iterator = 0;
 
-		while (iterator < 100)
+
+		/*
+		  		int iterator = 0;
+		  while (iterator < 100)
 		{
 			iterator++;
-			try
-			{
-				sp.Open();
-				Debug.Log("COM port is opened!\n");
-				iterator = -1;
-				break;
-			}
-			catch { }
 		}
 		if (iterator != -1)
 		{
 			throw new WeighingMachineException(comPort, " not found!");
+		}*/
+		try
+		{
+			sp.Open();
+			Debug.Log("COM port is opened!\n");
+			return true;
+			/*	iterator = -1;
+				break;*/
 		}
-		return;
-	}
-
-	public void saveStandartInput()
-	{
-		return;
+		catch { 
+			return false;
+		}
 
 	}
 
-	public void getStandartInput()
+	public bool getStandartInput()
 	{
+		int all_cycles = 0;
 		byte[] buffer = new byte[Constants.MESSAGE_LENGHT];
 		int ir = 0;
-		for (int i = 0; i < Constants.SIZE_STANDART_INPUT;)
+		for (int i = 0; i < Constants.SIZE_STANDART_INPUT; all_cycles++)
 		{
 			i += workWithSp(putCoords, writeToStandartInput, buffer, ref ir);
+            if (all_cycles == Constants.SIZE_STANDART_INPUT * 4)
+            {
+				Debug.Log("error com port!");
+				return false;
+            }
 		}
 		Debug.Log("Standart input : ");
 		for (int i = 0; i < 4; i++)
@@ -59,7 +64,7 @@ public class PlaneScript
 			standartInput[i] = standartInput[i] / Constants.SIZE_STANDART_INPUT;
 			//			Debug.Log(standartInput[i] + "\t");
 		}
-
+		return true;
 	}
 
 	private void clearBuffer()
@@ -172,7 +177,7 @@ public class PlaneScript
 
 	}
 
-	public void abortThread()
+	public void closeSerialPort()
 	{
 		sp.Close();
 	}

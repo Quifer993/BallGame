@@ -1,30 +1,37 @@
-using System.Collections;
-using System.Collections.Generic;
-using System.IO.Ports;
+
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
 
 public class MainMenu : MonoBehaviour {
     public void play() {
-        string[] ports = System.IO.Ports.SerialPort.GetPortNames();
-        foreach (string port in ports)
-        {
-            Debug.Log(port);
-        }
         SceneManager.LoadScene("Roll-a-ball", LoadSceneMode.Single);
     }
 
     public void getParamsPlane() {
         PlaneScript planeScr = new PlaneScript();
-        planeScr.openComPort();
-        planeScr.getStandartInput();
-        SaveDataFromPlane.SaveToFile(planeScr.standartInput);
+        string[] ports = System.IO.Ports.SerialPort.GetPortNames();
+        bool isExistingComPort = false;
+        string planePort = "";
+        foreach (string port in ports)
+        {
+            if (planeScr.openComPort(port) && planeScr.getStandartInput()) {
+                planePort = port;
+                isExistingComPort = true;
+                break;
+            }
+            Debug.Log(port);
+        }
+        if (!isExistingComPort)
+        {
+            Debug.Log("Нет порта, сделать вывод этого на экран");
+        }
+        SaveDataFromPlane.SaveToFile(planeScr.standartInput, planePort);
         SaveDataFromPlane.ReadFromFile(planeScr.standartInput);
         foreach (int i in planeScr.standartInput) {
             Debug.Log(i);
         }
-        planeScr.abortThread();
+        planeScr.closeSerialPort();
 
     }
 

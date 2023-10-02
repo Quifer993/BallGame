@@ -7,28 +7,32 @@ using UnityEngine;
 public static class SaveDataFromPlane {
     public const string fileName = "data.txt";
 
-    public static void SaveToFile(int[] standartInput)
+    public static void SaveToFile(int[] standartInput, string planePort)
     {
         using (StreamWriter writer = new StreamWriter(fileName))
         {
+            writer.WriteLine(planePort);
+            Debug.Log(planePort);
             foreach (int element in standartInput)
             {
                 writer.WriteLine(element);
+                Debug.Log(element);
             }
         }
     }
 
-    public static void ReadFromFile(int[] standartInput)
-    {
+    public static string ReadFromFile(int[] standartInput) {
+        string comPort = "";
         if (File.Exists(fileName))
         {
             string[] lines = File.ReadAllLines(fileName);
-            for (int i = 0; i < lines.Length; i++)
+            comPort = lines[0];
+            for (int i = 1; i < lines.Length; i++)
             {
                 int value;
                 if (int.TryParse(lines[i], out value))
                 {
-                    standartInput[i] = value;
+                    standartInput[i - 1] = value;
                 }
                 else
                 {
@@ -40,5 +44,6 @@ public static class SaveDataFromPlane {
         {
             Console.WriteLine("File does not exist");
         }
+        return comPort;
     }
 }
