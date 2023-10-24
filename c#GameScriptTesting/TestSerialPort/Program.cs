@@ -23,14 +23,15 @@ namespace PractizeTestingScripts {
 
 		class Game
 		{
-			private const int SIZE_STANDART_INPUT = 100;
-			private const int MESSAGE_LENGHT = 22;
-			private readonly int CAPACITY_BYTE_COORD = 4;
+			private const long SIZE_STANDART_INPUT = 50;
+			private const long MESSAGE_LENGHT = 22;
+			//private static readonly long CAPACITY_INTERVAL_COORD = 4;
+			private static readonly long CAPACITY_BYTE_COORD = 4;
 			/*private string comPort = System.IO.Ports.SerialPort.GetPortNames()[1];*/
 			private string comPort = "COM4";
 			private SerialPort sp;
 			private bool isContinue = true;
-			int[] standartInput = { 0, 0, 0, 0 };
+			long[] standartInput = { 0, 0, 0, 0 };
 
 			public void clearAll()
 			{
@@ -45,7 +46,7 @@ namespace PractizeTestingScripts {
 				sp = new SerialPort(comPort, 9600, Parity.None, 8, StopBits.One);
 				sp.Handshake = Handshake.None;
 				sp.RtsEnable = true;
-				int iterator = 0;
+				long iterator = 0;
 
 				while (iterator < 100) {
 					iterator++;
@@ -74,14 +75,14 @@ namespace PractizeTestingScripts {
 
 			private void getStandartInput() {
 				byte[] buffer = new byte[MESSAGE_LENGHT];
-				int ir = 0;
-				for (int i = 0; i < SIZE_STANDART_INPUT && isContinue; )
+				long ir = 0;
+				for (long i = 0; i < SIZE_STANDART_INPUT && isContinue; )
 				{
 					i += workWithSp(putCoords, writeToStandartInput, buffer, ref ir);
 				}
 
 				Console.WriteLine("Standart input : ");
-				for (int i = 0; i < 4; i++)
+				for (long i = 0; i < 4; i++)
 				{
 					standartInput[i] = standartInput[i] / SIZE_STANDART_INPUT;
 					Console.Write(standartInput[i] + "\t");
@@ -91,7 +92,7 @@ namespace PractizeTestingScripts {
 
 			private void putInputInformation() {
 				byte[] buffer = new byte[MESSAGE_LENGHT];
-				int ir = 0;
+				long ir = 0;
 
 				while (isContinue) {
 					Console.Write("\n");
@@ -99,9 +100,9 @@ namespace PractizeTestingScripts {
 				}
 			}
 
-            private int workWithSp(Action<byte[], Action<int, int>> putFunc, Action<int, int> putTo, byte[] buffer, ref int ir) {
+            private long workWithSp(Action<byte[], Action<long, long>> putFunc, Action<long, long> putTo, byte[] buffer, ref long ir) {
 					try {
-						if ((ir += sp.Read(buffer, ir, MESSAGE_LENGHT - ir)) >= MESSAGE_LENGHT) {
+						if ((ir += sp.Read(buffer, (int)ir, (int)MESSAGE_LENGHT - (int)ir)) >= MESSAGE_LENGHT) {
 							if (buffer[0] == '#' && buffer[20] == '#')
 							{
 								putFunc(buffer, putTo);
@@ -122,63 +123,70 @@ namespace PractizeTestingScripts {
 					return 0;
 			}
 
-            private void putCoords(byte[] buffer, Action<int, int> putTo) {
+            private void putCoords(byte[] buffer, Action<long, long> putTo) {
 				string bufStr = System.Text.Encoding.Default.GetString(buffer);
-                /*                Console.WriteLine(bufStr);*/
-
+				/*                Console.WriteLine(bufStr);*/
+				long sum = 0;
                 for (int i = 0; i < 5; i++) {
-					int valueWeight;
+					long valueWeight;
 
 					if (i != 4)
                     {
-						valueWeight = parseBlockStrToCoord(bufStr.Substring(i * CAPACITY_BYTE_COORD + 1, CAPACITY_BYTE_COORD), CAPACITY_BYTE_COORD);
+						valueWeight = parseBlockStrToCoord(bufStr.Substring(i * (int)CAPACITY_BYTE_COORD + 1, (int)CAPACITY_BYTE_COORD), CAPACITY_BYTE_COORD);
+						sum += valueWeight - standartInput[i];
 					}
                     else
                     {
-						valueWeight = parseBlockStrToCoord(bufStr.Substring(i * CAPACITY_BYTE_COORD + 1, CAPACITY_BYTE_COORD - 1), CAPACITY_BYTE_COORD - 1);
+						valueWeight = parseBlockStrToCoord(bufStr.Substring(i * (int)CAPACITY_BYTE_COORD + 1, (int)CAPACITY_BYTE_COORD), CAPACITY_BYTE_COORD);
 					}
 					writeValue(putTo, valueWeight, i);
 				}
+				/*				Console.WriteLine();
+								Console.WriteLine();
+								Console.WriteLine();*/
+				Console.WriteLine("вес в граммах : ");
+				writeValue(putTo, (long)(sum / 1.74), 4);
 			}
 
 
-			private void writeValue(Action<int, int> putTo, int value, int i){
+			private void writeValue(Action<long, long> putTo, long value, long i){
 				putTo(value, i);
 			}
 
-			private void writeToStandartInput(int value, int i) {
+			private void writeToStandartInput(long value, long i) {
                 if (i != 4) {
 					standartInput[i] += value;
 				}
 			}
-			private void writeToDebugOutput(int value, int i)
+			private void writeToDebugOutput(long value, long i)
 			{
 				if (i != 4) {
 					Console.Write(value - standartInput[i]);
 				} else {
-					Console.Write(value);
+					Console.Write(value / 3);
 				}
 
 				Console.Write('\t');
 
 			}
 
-			private int parseBlockStrToCoord(string coordStr, int len)
+			private long parseBlockStrToCoord(string coordStr, long len)
 			/*числа обозначают силу, приложенную к 1ому из 4  углов, 
 			 * начиная с правого нижнего против часовой стрелки*/
-
 			{
-				int coord = 0;
-				for (int i = 0; i < len; i++)
-				{
-					if (coordStr[i] > 92){
-						coord += (coordStr[i] - 36) * (int)Math.Pow((Double)64, (Double)i);
+				long coord = 0;
+				for (long i = 0; i < len; i++) {
+/*					Console.Write(coordStr[(int)i] + 0);
+					Console.Write(" ");*//*					Console.Write(coordStr[(int)i] + 0);
+					Console.Write(" ");*/
+					if (coordStr[(int)i] > 94){
+						coord += ((int)coordStr[(int)i] - 36) * (long)Math.Pow((Double)64, (Double)i);
 					}
                     else{
-						coord += (coordStr[i] - 35) * (int)Math.Pow((Double)64, (Double)i);
+						coord += ((int)coordStr[(int)i] - 35) * (long)Math.Pow((Double)64, (Double)i);
 					}
-					
 				}
+
 				return coord;
 			}
 

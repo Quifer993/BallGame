@@ -107,7 +107,7 @@ public class PlaneScript
 		int coord = 0;
 		for (int i = 0; i < len; i++)
 		{
-			if (coordStr[i] > 92)
+			if (coordStr[i] > 94)
 			{
 				coord += (coordStr[i] - 36) * (int)Math.Pow((Double)64, (Double)i);
 			}

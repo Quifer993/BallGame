@@ -6,7 +6,7 @@ using UnityEngine.SceneManagement;
 public class MainMenu : MonoBehaviour {
     public void play() {
         PlayerPrefs.SetString("error", "");
-        SceneManager.LoadScene("Roll-a-ball", LoadSceneMode.Single);
+        SceneManager.LoadScene("level1", LoadSceneMode.Single);
     }
 
     public void getParamsPlane() {
