@@ -8,9 +8,6 @@ public class MainMenuManager : MonoBehaviour
 {
     public void uploadLevel(int numberLevel) {
         SceneManager.LoadScene("level" + numberLevel, LoadSceneMode.Single);
-
-
-
         /*
         Button clickedButton = UnityEngine.EventSystems.EventSystem.current.currentSelectedGameObject.GetComponent<Button>();
         Text textClickedButton = clickedButton.GetComponent<Text>();

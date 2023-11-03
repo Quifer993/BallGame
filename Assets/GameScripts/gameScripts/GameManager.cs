@@ -9,6 +9,7 @@ public class GameManager : MonoBehaviour
     public PlayerController playerController;
 
     bool isEnd = false;
+    bool isEndGame = false;
     public void endGame(float timeoutRestart, string typeEndGame)
     {
         if (!isEnd)
@@ -16,16 +17,15 @@ public class GameManager : MonoBehaviour
             isEnd = true;
             Debug.Log("GAME OVER");
             playerController.abortThread();
-            if (typeEndGame == "fail")
+            if (typeEndGame == "fail" && !isEndGame)
             {
                 Invoke("restart", timeoutRestart);
- //               restart();
             }
             else if (typeEndGame == "End")
             {
                 textWin.text = "YOU WON!";
-                Invoke("restart", timeoutRestart);
-//                restart();
+                isEndGame = true;
+                Invoke("loadMainMenu", timeoutRestart);
             }
              
         }
@@ -39,5 +39,10 @@ public class GameManager : MonoBehaviour
     void restart()
     {
         SceneManager.LoadScene(SceneManager.GetActiveScene().name, LoadSceneMode.Single);
+    }
+
+    void loadMainMenu()
+    {
+        SceneManager.LoadScene("MainMenu", LoadSceneMode.Single);
     }
 }

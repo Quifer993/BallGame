@@ -154,6 +154,29 @@ public class PlayerController : MonoBehaviour {
 	{
 		// Update the text field of our 'countText' variable
 		countText.text = "Count: " + count.ToString ();
+		Debug.Log(gameObject.name);
+
+		// Получаем все соседние коллайдеры
+		var neighbors = transform.GetComponentInParent<Component>().GetComponentsInChildren<Component>();
+
+		// Перебираем каждый соседний объект
+		foreach (var n in neighbors)
+		{
+			Debug.Log(n);
+
+			// Если объект имеет нужное имя компонента
+			if (n.gameObject.name == "PickUps")
+			{
+				// Получаем компонент
+				GameObject component = n.GetComponent<GameObject>();
+
+				// Если компонент найден, делаем с ним что-то
+				if (component != null)
+				{
+					Debug.Log("ferfe");
+				}
+			}
+		}
 
 		// Check if our 'count' is equal to or exceeded 12
 		if (count >= 12) 
