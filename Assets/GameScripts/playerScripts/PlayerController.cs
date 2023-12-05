@@ -19,7 +19,6 @@ public class PlayerController : MonoBehaviour {
 	private const float MAX_FALL = -3f;
 	public Text countText;
 	public Text winText;
-	public Text portOutput;
 	private int count;
 	private bool isContinue = true;
 
@@ -64,9 +63,6 @@ public class PlayerController : MonoBehaviour {
 			movementVector[i] = value - planeScr.standartInput[i];
 		}
 	}
-
-	
-
 
 	private void gameEngine() {
 
@@ -131,58 +127,18 @@ public class PlayerController : MonoBehaviour {
 		/*Debug.Log(movement);*/
 	}
 
-	// When this game object intersects a collider with 'is trigger' checked, 
-	// store a reference to that collider in a variable named 'other'..
-	void OnTriggerEnter(Collider other) 
-	{
-		// ..and if the game object we intersect has the tag 'Pick Up' assigned to it..
-		if (other.gameObject.CompareTag ("Pick Up"))
-		{
-			// Make the other game object (the pick up) inactive, to make it disappear
+	void OnTriggerEnter(Collider other) {
+		if (other.gameObject.CompareTag ("Pick Up")) {
 			other.gameObject.SetActive (false);
-
-			// Add one to the score variable 'count'
 			count = count + 1;
-
-			// Run the 'SetCountText()' function (see below)
 			SetCountText ();
 		}
 	}
 
-	// Create a standalone function that can update the 'countText' UI and check if the required amount to win has been achieved
-	void SetCountText()
-	{
-		// Update the text field of our 'countText' variable
-		countText.text = "Count: " + count.ToString ();
-		Debug.Log(gameObject.name);
+	void SetCountText(){
+		var neighbors = GameObject.FindGameObjectsWithTag("Pick Up");
+		countText.text = "Count: " + count.ToString () + " / " + (count + neighbors.Length);
 
-		// Получаем все соседние коллайдеры
-		var neighbors = transform.GetComponentInParent<Component>().GetComponentsInChildren<Component>();
-
-		// Перебираем каждый соседний объект
-		foreach (var n in neighbors)
-		{
-			Debug.Log(n);
-
-			// Если объект имеет нужное имя компонента
-			if (n.gameObject.name == "PickUps")
-			{
-				// Получаем компонент
-				GameObject component = n.GetComponent<GameObject>();
-
-				// Если компонент найден, делаем с ним что-то
-				if (component != null)
-				{
-					Debug.Log("ferfe");
-				}
-			}
-		}
-
-		// Check if our 'count' is equal to or exceeded 12
-		if (count >= 12) 
-		{
-			// Set the text value of our 'winText'
-			countText.text = "You pick up all! Let's to end..";
-		}
+		if (neighbors.Length == 0) countText.text = "You pick up all! Let's to end..";
 	}
 }

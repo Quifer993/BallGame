@@ -12,9 +12,7 @@ public class CameraController : MonoBehaviour {
 	{
 		// Create an offset by subtracting the Camera's position from the player's position
 		offset = transform.position - player.transform.position;
-		Debug.Log(overlay.enabled);
 		overlay.gameObject.SetActive(true);
-		Debug.Log(overlay.enabled);
 
 	}
 
