@@ -25,7 +25,13 @@ public class GameManager : MonoBehaviour
             {
                 textWin.text = "YOU WON!";
                 isEndGame = true;
-                Invoke("loadMainMenu", timeoutRestart);
+                if (PlayerPrefs.GetString("Automatic").Equals("true")) {
+
+                    Invoke("loadLevel", timeoutRestart);
+                }
+                else {
+                    Invoke("loadMainMenu", timeoutRestart);
+                }
             }
              
         }
@@ -44,5 +50,12 @@ public class GameManager : MonoBehaviour
     void loadMainMenu()
     {
         SceneManager.LoadScene("MainMenu", LoadSceneMode.Single);
+    }
+
+    void loadLevel()
+    {
+        int num = int.Parse(string.Join("", SceneManager.GetActiveScene().name.Split("level")));
+        Debug.Log(num);
+        SceneManager.LoadScene("level" + ++num, LoadSceneMode.Single);
     }
 }

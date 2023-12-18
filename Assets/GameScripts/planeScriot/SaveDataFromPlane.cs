@@ -12,11 +12,11 @@ public static class SaveDataFromPlane {
         using (StreamWriter writer = new StreamWriter(fileName))
         {
             writer.WriteLine(planePort);
-            Debug.Log(planePort);
+//            Debug.Log(planePort);
             foreach (int element in standartInput)
             {
                 writer.WriteLine(element);
-                Debug.Log(element);
+//                Debug.Log(element);
             }
         }
     }

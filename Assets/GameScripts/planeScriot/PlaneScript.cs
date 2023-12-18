@@ -12,31 +12,15 @@ public class PlaneScript
 	public int[] standartInput = { 0, 0, 0, 0 };
 
 
-	public bool openComPort(String comPort)
-	{
-//		comPort = Constants.COM_PORT;
+	public bool openComPort(String comPort) {
 		sp = new SerialPort(comPort, 9600, Parity.None, 8, StopBits.One);
 		sp.Handshake = Handshake.None;
 		sp.RtsEnable = true;
 
-
-		/*
-		  		int iterator = 0;
-		  while (iterator < 100)
-		{
-			iterator++;
-		}
-		if (iterator != -1)
-		{
-			throw new WeighingMachineException(comPort, " not found!");
-		}*/
-		try
-		{
+		try {
 			sp.Open();
 			Debug.Log("COM port is opened!\n");
 			return true;
-			/*	iterator = -1;
-				break;*/
 		}
 		catch { 
 			return false;
@@ -58,7 +42,7 @@ public class PlaneScript
 				return false;
             }
 		}
-		Debug.Log("Standart input : ");
+//		Debug.Log("Standart input : ");
 		for (int i = 0; i < 4; i++)
 		{
 			standartInput[i] = standartInput[i] / Constants.SIZE_STANDART_INPUT;
@@ -150,6 +134,8 @@ public class PlaneScript
 
 	private void writeValue(Action<int, int> putTo, int value, int i)
 	{
+		Debug.Log("aaaa");
+
 		putTo(value, i);
 	}
 
@@ -180,5 +166,36 @@ public class PlaneScript
 	public void closeSerialPort()
 	{
 		sp.Close();
+	}
+
+	public bool getParamsPlane() {
+		string[] ports = System.IO.Ports.SerialPort.GetPortNames();
+		bool isExistingComPort = false;
+		string planePort = "";
+		foreach (string port in ports)
+		{
+			if (openComPort(port) && getStandartInput())
+			{
+				planePort = port;
+//				Debug.Log(port);
+				isExistingComPort = true;
+				break;
+			}
+		}
+		if (!isExistingComPort)
+		{
+			Debug.Log("Нет порта, сделать вывод этого на экран");
+			return false;
+		}
+		SaveDataFromPlane.SaveToFile(standartInput, planePort);
+		SaveDataFromPlane.ReadFromFile(standartInput);
+		string valueStandartInput = "";
+        foreach (int i in standartInput)
+        {
+			valueStandartInput += i + " ";
+        }
+//		Debug.Log(valueStandartInput);
+        closeSerialPort();
+		return true;
 	}
 }

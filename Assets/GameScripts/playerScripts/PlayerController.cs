@@ -13,7 +13,7 @@ class WeighingMachineException : Exception
 
 public class PlayerController : MonoBehaviour {
 	private SerialPort sp;
-	public float speed;
+	public float speed = 5.0f;
 	private Rigidbody rb;
 
 	private const float MAX_FALL = -3f;
@@ -41,7 +41,8 @@ public class PlayerController : MonoBehaviour {
 			float sum = 0;
 			for (int i = 0; i < 4;i++)
             {
-				sum += (float)movementVector[i];
+				sum += (float)Math.Abs( movementVector[i]);
+				Debug.Log(sum);
             }
 			if (sum > 5000)
 			{
@@ -97,9 +98,7 @@ public class PlayerController : MonoBehaviour {
 		if (!planeScr.openComPort(comPort)) {
 			PlayerPrefs.SetString("error", "Com port is not already used a plane for game. Please, use rebuild setting for plane!");
 			SceneManager.LoadScene("MainMenu", LoadSceneMode.Single);
-			//FindObjectOfType<GameManager>().endGame(0f, "Com port is not already used a plane for game. Please, use rebuild setting for plane!");
-			//planeScr.closeSerialPort();
-			Debug.Log("Logic is mith");
+			Debug.Log("Can't open COM-port");
 
 			return;
 		}
@@ -123,8 +122,7 @@ public class PlayerController : MonoBehaviour {
 		Vector3 mousePosCenter = new Vector3(mousePos.x / Screen.width - 0.5f, 0.0f, mousePos.y / Screen.height - 0.5f);
 
 
-		rb.AddForce (movement * 7.0f);
-		/*Debug.Log(movement);*/
+		rb.AddForce (movement * speed);
 	}
 
 	void OnTriggerEnter(Collider other) {

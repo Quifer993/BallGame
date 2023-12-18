@@ -7,6 +7,7 @@ using UnityEngine.SceneManagement;
 public class MainMenuManager : MonoBehaviour
 {
     public void uploadLevel(int numberLevel) {
+        PlayerPrefs.SetString("error", "");
         SceneManager.LoadScene("level" + numberLevel, LoadSceneMode.Single);
         /*
         Button clickedButton = UnityEngine.EventSystems.EventSystem.current.currentSelectedGameObject.GetComponent<Button>();
