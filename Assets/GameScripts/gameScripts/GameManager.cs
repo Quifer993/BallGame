@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 using System.Collections;
+using System;
 
 public class GameManager : MonoBehaviour
 {
@@ -16,6 +17,7 @@ public class GameManager : MonoBehaviour
         {
             isEnd = true;
             Debug.Log("GAME OVER");
+            playerController.StopMove();
             playerController.abortThread();
             if (typeEndGame == "fail" && !isEndGame)
             {
@@ -25,13 +27,13 @@ public class GameManager : MonoBehaviour
             {
                 textWin.text = "YOU WON!";
                 isEndGame = true;
-                if (PlayerPrefs.GetString("Automatic").Equals("true")) {
+//                if (PlayerPrefs.GetString("Automatic").Equals("true")) {
 
                     Invoke("loadLevel", timeoutRestart);
-                }
+/*                }
                 else {
                     Invoke("loadMainMenu", timeoutRestart);
-                }
+                }*/
             }
              
         }
@@ -55,7 +57,12 @@ public class GameManager : MonoBehaviour
     void loadLevel()
     {
         int num = int.Parse(string.Join("", SceneManager.GetActiveScene().name.Split("level")));
-        Debug.Log(num);
-        SceneManager.LoadScene("level" + ++num, LoadSceneMode.Single);
+        String nameNextScene = "level" + ++num;
+
+        if (nameNextScene.Equals("level7")) {
+            SceneManager.LoadScene("MainMenu", LoadSceneMode.Single);
+        }else {
+            SceneManager.LoadScene(nameNextScene, LoadSceneMode.Single);
+        }
     }
 }

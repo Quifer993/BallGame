@@ -15,9 +15,16 @@ public class PlayerController : MonoBehaviour {
 	private SerialPort sp;
 	public float speed = 5.0f;
 	private Rigidbody rb;
+	private TypeOfMovement typeOfMovement;
 
 	private const float MAX_FALL = -3f;
-	public Text countText;
+
+    internal void StopMove()
+    {
+        movement = new Vector3(0.0f, 0.0f, 0.0f);
+	}
+
+    public Text countText;
 	public Text winText;
 	private int count;
 	private bool isContinue = true;
@@ -42,8 +49,9 @@ public class PlayerController : MonoBehaviour {
 			for (int i = 0; i < 4;i++)
             {
 				sum += (float)Math.Abs( movementVector[i]);
-				Debug.Log(sum);
             }
+			//Debug.Log(sum);
+
 			if (sum > 5000)
 			{
 				movement = new Vector3(((float)(movementVector[0] + movementVector[1] - movementVector[2] - movementVector[3]) / sum),
@@ -66,9 +74,7 @@ public class PlayerController : MonoBehaviour {
 	}
 
 	private void gameEngine() {
-
-		foreach (int i in planeScr.standartInput)
-		{
+		foreach (int i in planeScr.standartInput) {
 			Debug.Log(i);
 		}
 		//		getStandartInput();
@@ -77,6 +83,19 @@ public class PlayerController : MonoBehaviour {
 
 
 	void Start () {
+		switch (PlayerPrefs.GetInt("typeMovement")) {
+			case (MovementEnum.CONSTANT):
+				typeOfMovement = new ConstantMovement();
+				break;
+			case (MovementEnum.FORSE):
+				typeOfMovement = new ForseMovement();
+				break;
+			default:
+				typeOfMovement = new MouseMovement();
+				Debug.Log("wtf error");
+				break;
+		}
+		//typeOfMovement = new MouseMovement();
 		rb = GetComponent<Rigidbody>();
 		//rb.isKinematic = true;
 		count = 0;
@@ -102,6 +121,7 @@ public class PlayerController : MonoBehaviour {
 
 			return;
 		}
+
 		myThread = new Thread(gameEngine);
 		myThread.Start();
 	}
@@ -117,12 +137,14 @@ public class PlayerController : MonoBehaviour {
 			abortThread();
 			FindObjectOfType<GameManager>().endGame(0f, "fail");
 		}
+		typeOfMovement.move(rb, movement, speed);
+	}
 
-		Vector3 mousePos = Input.mousePosition;
-		Vector3 mousePosCenter = new Vector3(mousePos.x / Screen.width - 0.5f, 0.0f, mousePos.y / Screen.height - 0.5f);
 
-
-		rb.AddForce (movement * speed);
+	void SetCountText() {
+		var neighbors = GameObject.FindGameObjectsWithTag("Pick Up");
+		countText.text = "Count: " + count.ToString() + " / " + (count + neighbors.Length);
+		if (neighbors.Length == 0) countText.text = "You pick up all! Let's to end..";
 	}
 
 	void OnTriggerEnter(Collider other) {
@@ -131,12 +153,5 @@ public class PlayerController : MonoBehaviour {
 			count = count + 1;
 			SetCountText ();
 		}
-	}
-
-	void SetCountText(){
-		var neighbors = GameObject.FindGameObjectsWithTag("Pick Up");
-		countText.text = "Count: " + count.ToString () + " / " + (count + neighbors.Length);
-
-		if (neighbors.Length == 0) countText.text = "You pick up all! Let's to end..";
 	}
 }

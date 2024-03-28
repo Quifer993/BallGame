@@ -23,4 +23,14 @@ public class MainMenuManager : MonoBehaviour
             Debug.Log(textClickedButton.GetComponentInChildren<Text>());
         }*/
     }
+
+    public void loadMainMenu()
+    {
+        SceneManager.LoadScene("MainMenu", LoadSceneMode.Single);
+    }
+
+    public void exitGame()
+    {
+        Application.Quit();
+    }
 }

@@ -11,6 +11,11 @@ public class PlaneScript
 	private SerialPort sp;
 	public int[] standartInput = { 0, 0, 0, 0 };
 
+    public SerialPort getPort()
+    {
+		return sp;
+
+	}
 
 	public bool openComPort(String comPort) {
 		sp = new SerialPort(comPort, 9600, Parity.None, 8, StopBits.One);
@@ -132,18 +137,13 @@ public class PlaneScript
 	}
 
 
-	private void writeValue(Action<int, int> putTo, int value, int i)
-	{
-		Debug.Log("aaaa");
-
+	private void writeValue(Action<int, int> putTo, int value, int i) {
 		putTo(value, i);
 	}
 
 
-	private void writeToStandartInput(int value, int i)
-	{
-		if (i != 4)
-		{
+	private void writeToStandartInput(int value, int i){
+		if (i != 4){
 			standartInput[i] += value;
 		}
 	}
