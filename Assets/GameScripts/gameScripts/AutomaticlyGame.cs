@@ -13,6 +13,7 @@ public class AutomaticlyGame : MonoBehaviour
     public TextMeshProUGUI timerText;
     public TextMeshProUGUI againText;
     public TextMeshProUGUI aboutText;
+    public TextMeshProUGUI partParsingText;
     float gameTime = 0f;
     int lifeTime;
     bool isTimeStart = false;
@@ -22,6 +23,7 @@ public class AutomaticlyGame : MonoBehaviour
 
     PlaneScript planeScr;
     int[] movementVector = { 0, 0, 0, 0 };
+    bool isError = false;
 
     byte[] buffer = new byte[Constants.MESSAGE_LENGHT];
     int ir = 0;
@@ -31,6 +33,12 @@ public class AutomaticlyGame : MonoBehaviour
 
     // Update is called once per frame
     void Update() {
+        if (isError) {
+            aboutText.text = "Присоедините стабилометрическую платформу к компьютеру и попробуйте снова";
+        }
+        else { 
+            aboutText.text = "Не вставайте на платформу. Настройка платформы закончится через ";
+        }
         try {
             if (errorCount >= MAX_TIME * 2) {
                 Debug.Log("error with platform");
@@ -41,6 +49,7 @@ public class AutomaticlyGame : MonoBehaviour
             }
 
             if (isTimeStart) {
+                partParsingText.text = "Проверка данных";
                 gameTime += 1 * Time.deltaTime;
 
                 if (checkValuesFromCom()) {
@@ -83,7 +92,13 @@ public class AutomaticlyGame : MonoBehaviour
         buffer = new byte[Constants.MESSAGE_LENGHT];
         ir = 0;
 
-        //логика весов
+        //логика стабилометрической платформы
+        partParsingText.text = "Настройка платформы";
+        var threadPlane = new Thread(planeParsing);
+        threadPlane.Start();
+    }
+
+    private void planeParsing() {
         if (planeScr.getParamsPlane())
         {
             string comPort = SaveDataFromPlane.ReadFromFile(planeScr.standartInput);
@@ -127,8 +142,7 @@ public class AutomaticlyGame : MonoBehaviour
         }
     }
 
-    public void startTime()
-    {
+    public void startTime() {
         try
         {
             localStartTime();
@@ -140,7 +154,6 @@ public class AutomaticlyGame : MonoBehaviour
         
         againText.text = "";
         countTry = 1;
-        aboutText.text = planeScr.getPort().PortName;
     }
 
     public void stopTime()

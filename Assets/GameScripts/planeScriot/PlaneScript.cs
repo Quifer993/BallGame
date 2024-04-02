@@ -165,7 +165,14 @@ public class PlaneScript
 
 	public void closeSerialPort()
 	{
-		sp.Close();
+        try
+        {
+			sp.Close();
+        }
+        catch (Exception e)
+        {
+			Debug.Log("Serial port not opened yet");
+        }
 	}
 
 	public bool getParamsPlane() {
