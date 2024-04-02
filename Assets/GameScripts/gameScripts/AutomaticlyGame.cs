@@ -107,10 +107,6 @@ public class AutomaticlyGame : MonoBehaviour
 
             isTimeStart = true;
         }
-        else
-        {
-            throw new ArgumentNullException("com port is empty(with error before)");
-        }
     }
 
     private bool checkValuesFromCom()

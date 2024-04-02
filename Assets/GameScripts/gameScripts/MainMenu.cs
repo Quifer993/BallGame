@@ -7,8 +7,6 @@ public class MainMenu : MonoBehaviour {
     public TMPro.TMP_Dropdown dropDown;
 
     private void Start() {
-        GameLogger gameLogger;
-
         int typeMove = PlayerPrefs.GetInt("typeMovement", MovementEnum.FORSE);
         if (typeMove == MovementEnum.FORSE || typeMove == MovementEnum.CONSTANT) {
             dropDown.value = typeMove;

@@ -10,8 +10,9 @@ public class PlaneScript
 {
 	private SerialPort sp;
 	public int[] standartInput = { 0, 0, 0, 0 };
+	GameLogger logger = new GameLogger();
 
-    public SerialPort getPort()
+	public SerialPort getPort()
     {
 		return sp;
 
@@ -171,7 +172,7 @@ public class PlaneScript
         }
         catch (Exception e)
         {
-			Debug.Log("Serial port not opened yet");
+			Debug.Log("Serial port not opened yet: " + e.Message);
         }
 	}
 
@@ -191,6 +192,7 @@ public class PlaneScript
 		}
 		if (!isExistingComPort)
 		{
+			logger.Log("Нет порта", "", LogType.Error);
 			Debug.Log("Нет порта, сделать вывод этого на экран");
 			return false;
 		}

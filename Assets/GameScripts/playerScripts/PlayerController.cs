@@ -74,7 +74,9 @@ public class PlayerController : MonoBehaviour {
 	}
 
 	private void gameEngine() {
+		GameLogger logger = new GameLogger();
 		foreach (int i in planeScr.standartInput) {
+			logger.Log(i.ToString(), "", LogType.Log);
 			Debug.Log(i);
 		}
 		//		getStandartInput();
@@ -91,8 +93,8 @@ public class PlayerController : MonoBehaviour {
 				typeOfMovement = new ForseMovement();
 				break;
 			default:
-				typeOfMovement = new MouseMovement();
-				Debug.Log("wtf error");
+				typeOfMovement = new ConstantMovement();
+				//typeOfMovement = new MouseMovement();
 				break;
 		}
 		//typeOfMovement = new MouseMovement();
