@@ -63,3 +63,5 @@ crashlytics-build.properties
 *.exe
 *.cache
 *.csproj.FileListAbsolute.txt
+data.txt
+logfile.txt
