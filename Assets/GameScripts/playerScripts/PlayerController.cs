@@ -145,8 +145,8 @@ public class PlayerController : MonoBehaviour {
 
 	void SetCountText() {
 		var neighbors = GameObject.FindGameObjectsWithTag("Pick Up");
-		countText.text = "Count: " + count.ToString() + " / " + (count + neighbors.Length);
-		if (neighbors.Length == 0) countText.text = "You pick up all! Let's to end..";
+		countText.text = "Собрано: " + count.ToString() + " / " + (count + neighbors.Length);
+		if (neighbors.Length == 0) countText.text = "Вы всё собрали - \nдвигайтесь к финишу!";
 	}
 
 	void OnTriggerEnter(Collider other) {

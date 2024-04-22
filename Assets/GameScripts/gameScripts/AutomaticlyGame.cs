@@ -23,7 +23,7 @@ public class AutomaticlyGame : MonoBehaviour
 
     PlaneScript planeScr;
     int[] movementVector = { 0, 0, 0, 0 };
-    bool isError = false;
+    bool isError;
 
     byte[] buffer = new byte[Constants.MESSAGE_LENGHT];
     int ir = 0;
@@ -35,6 +35,7 @@ public class AutomaticlyGame : MonoBehaviour
     void Update() {
         if (isError) {
             aboutText.text = "Присоедините стабилометрическую платформу к компьютеру и попробуйте снова";
+            partParsingText.text = "Ошибка";
         }
         else { 
             aboutText.text = "Не вставайте на платформу. Настройка платформы закончится через ";
@@ -49,7 +50,7 @@ public class AutomaticlyGame : MonoBehaviour
             }
 
             if (isTimeStart) {
-                partParsingText.text = "Проверка данных";
+                partParsingText.text = "(ШАГ 2/2) Проверка данных";
                 gameTime += 1 * Time.deltaTime;
 
                 if (checkValuesFromCom()) {
@@ -88,13 +89,15 @@ public class AutomaticlyGame : MonoBehaviour
         timerText.text = lifeTime + "";
         gameTime = 0f;
         errorCount = 0;
+        isError = false;
 
         buffer = new byte[Constants.MESSAGE_LENGHT];
         ir = 0;
 
         //логика стабилометрической платформы
-        partParsingText.text = "Настройка платформы";
+        partParsingText.text = "(ШАГ 1/2) Настройка платформы";
         var threadPlane = new Thread(planeParsing);
+        Debug.Log("Запуск planeParsing в потоке\n");
         threadPlane.Start();
     }
 
@@ -106,6 +109,10 @@ public class AutomaticlyGame : MonoBehaviour
 
 
             isTimeStart = true;
+        }
+        else
+        {
+            isError = true;
         }
     }
 
@@ -139,6 +146,7 @@ public class AutomaticlyGame : MonoBehaviour
     }
 
     public void startTime() {
+        Debug.Log("start setting plane\n");
         try
         {
             localStartTime();

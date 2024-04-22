@@ -15,7 +15,6 @@ public class PlaneScript
 	public SerialPort getPort()
     {
 		return sp;
-
 	}
 
 	public bool openComPort(String comPort) {
@@ -28,7 +27,8 @@ public class PlaneScript
 			Debug.Log("COM port is opened!\n");
 			return true;
 		}
-		catch { 
+		catch {
+			Debug.Log("Невозможно открыть порт: " + comPort + "\n");
 			return false;
 		}
 
@@ -39,21 +39,23 @@ public class PlaneScript
 		int all_cycles = 0;
 		byte[] buffer = new byte[Constants.MESSAGE_LENGHT];
 		int ir = 0;
+		Debug.Log("Чтение из порта: старт\n");
 		for (int i = 0; i < Constants.SIZE_STANDART_INPUT; all_cycles++)
 		{
 			i += workWithSp(putCoords, writeToStandartInput, buffer, ref ir);
             if (all_cycles == Constants.SIZE_STANDART_INPUT * 4)
             {
-				Debug.Log("error com port!");
+				Debug.Log("error com port!\n");
 				return false;
             }
 		}
-//		Debug.Log("Standart input : ");
+		Debug.Log("Standart input : \n");
 		for (int i = 0; i < 4; i++)
 		{
 			standartInput[i] = standartInput[i] / Constants.SIZE_STANDART_INPUT;
-			//			Debug.Log(standartInput[i] + "\t");
+			Debug.Log(standartInput[i] + "\t");
 		}
+		Debug.Log("Чтение из порта: конец\n");
 		return true;
 	}
 
@@ -64,14 +66,14 @@ public class PlaneScript
 
 	public int workWithSp(Action<byte[], Action<int, int>> putFunc, Action<int, int> putTo, byte[] buffer, ref int ir)
 	{
-		try
-		{
+		try {
 			if ((ir += sp.Read(buffer, ir, Constants.MESSAGE_LENGHT - ir)) >= Constants.MESSAGE_LENGHT)
 			{
-				if (buffer[0] == '#' && buffer[20] == '#')
-				{
+				if (buffer[0] == '#' && buffer[20] == '#') {
+					Debug.Log("putFunc\n");
 					putFunc(buffer, putTo);
 					ir = 0;
+					Debug.Log("workWithSp - return\n");
 					return 1;
 				}
 				else
@@ -83,7 +85,7 @@ public class PlaneScript
 		}
 		catch (Exception e)
 		{
-			Debug.Log(e.Message);
+			Debug.Log("workWithSp - " + e.Message + "\n");
 		}
 		return 0;
 	}
@@ -144,6 +146,7 @@ public class PlaneScript
 
 
 	private void writeToStandartInput(int value, int i){
+		Debug.Log("writeToStandartInput - старт\n");
 		if (i != 4){
 			standartInput[i] += value;
 		}
@@ -177,15 +180,22 @@ public class PlaneScript
 	}
 
 	public bool getParamsPlane() {
+		Debug.Log("getParamsPlane" + " старт");
 		string[] ports = System.IO.Ports.SerialPort.GetPortNames();
 		bool isExistingComPort = false;
 		string planePort = "";
+		Debug.Log("ports: " + ports);
 		foreach (string port in ports)
 		{
-			if (openComPort(port) && getStandartInput())
-			{
+			Debug.Log(port + " ");
+			bool isOpenComPort = openComPort(port);
+			Debug.Log("isOpenComPort - " + isOpenComPort);
+			bool isGetStandartInput = getStandartInput();
+			Debug.Log("isGetStandartInput - " + isGetStandartInput);
+
+			if (isOpenComPort && isGetStandartInput) {
+				Debug.Log(port + " - Порт с стабилометрической платформой существует и отдает запросы.");
 				planePort = port;
-//				Debug.Log(port);
 				isExistingComPort = true;
 				break;
 			}

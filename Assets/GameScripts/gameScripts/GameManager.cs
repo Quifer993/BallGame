@@ -25,7 +25,7 @@ public class GameManager : MonoBehaviour
             }
             else if (typeEndGame == "End")
             {
-                textWin.text = "YOU WON!";
+                textWin.text = "Вы выйграли!";
                 isEndGame = true;
 //                if (PlayerPrefs.GetString("Automatic").Equals("true")) {
 
