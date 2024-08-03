@@ -9,7 +9,7 @@ using System.Threading;
 
 public class AutomaticlyGame : MonoBehaviour
 {
-    const int MAX_TIME = 5;
+    const int MAX_TIME = 3;
     public TextMeshProUGUI timerText;
     public TextMeshProUGUI againText;
     public TextMeshProUGUI aboutText;
@@ -126,13 +126,11 @@ public class AutomaticlyGame : MonoBehaviour
         for (int i = 0; i < 4; i++)
         {
             sum += (float)Math.Abs(movementVector[i]);
-            //Debug.Log(1);
         }
         if (sum > 5000)
         {
-            //Debug.Log(sum);
             errorCount++;
-            Debug.Log("error with platform");
+            Debug.Log("Sum-error platform");
             //return true;
         }
         return false;

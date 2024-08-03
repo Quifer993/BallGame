@@ -5,6 +5,7 @@ using UnityEngine.UI;
 using UnityEngine.SceneManagement;
 using System.Threading;
 using System;
+using System.Diagnostics;
 
 public class MainMenuManager : MonoBehaviour
 {
@@ -27,7 +28,7 @@ public class MainMenuManager : MonoBehaviour
 
         PlaneScript plane = new PlaneScript();
         string port = SaveDataFromPlane.ReadFromFile(arr);
-        Debug.Log(port);
+        UnityEngine.Debug.Log(port);
         if (port.Equals("") || !plane.openComPort(port))
         {
             var myThread = new Thread(changeColor);
@@ -60,15 +61,13 @@ public class MainMenuManager : MonoBehaviour
         }*/
     }
 
-    private void changeColor(object obj)
-    {
+    private void changeColor(object obj){
         isError = true;
         Thread.Sleep(3500);
         isError = false;
     }
 
-    public void loadSettingPlane()
-    {
+    public void loadSettingPlane(){
         checkError();
         AutomaticlyGame automaticlyGame = new AutomaticlyGame();
         automaticlyGame.startTime();
@@ -81,6 +80,8 @@ public class MainMenuManager : MonoBehaviour
 
     public void exitGame()
     {
+        UnityEngine.Debug.Log("Quit game");
+        Process.GetCurrentProcess().Kill();
         Application.Quit();
     }
 }

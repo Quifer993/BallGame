@@ -70,10 +70,8 @@ public class PlaneScript
 			if ((ir += sp.Read(buffer, ir, Constants.MESSAGE_LENGHT - ir)) >= Constants.MESSAGE_LENGHT)
 			{
 				if (buffer[0] == '#' && buffer[20] == '#') {
-					Debug.Log("putFunc\n");
 					putFunc(buffer, putTo);
 					ir = 0;
-					Debug.Log("workWithSp - return\n");
 					return 1;
 				}
 				else
@@ -85,7 +83,15 @@ public class PlaneScript
 		}
 		catch (Exception e)
 		{
-			Debug.Log("workWithSp - " + e.Message + "\n");
+            if (sp.IsOpen)
+            {
+				Debug.Log("workWithSp - " + e.Message + "\n");
+            }
+            else
+            {
+				Debug.Log("workWithSp: plane was disconnected - " + e.Message + "\n");
+				return 1;
+			}
 		}
 		return 0;
 	}
@@ -146,7 +152,6 @@ public class PlaneScript
 
 
 	private void writeToStandartInput(int value, int i){
-		Debug.Log("writeToStandartInput - старт\n");
 		if (i != 4){
 			standartInput[i] += value;
 		}
